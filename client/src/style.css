@@ -1,0 +1,18 @@
+:root {
+  font-family: system-ui, 'Hiragino Sans', 'Yu Gothic UI', sans-serif;
+  color: #1f2933;
+  background: #f5f7fa;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+button {
+  font: inherit;
+  cursor: pointer;
+}
