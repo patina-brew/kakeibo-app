@@ -56,30 +56,30 @@ describe("monthly summary", () => {
   });
 });
 
-describe("fiscal-year summary", () => {
-  it("assigns 3/31 and 4/1 to different fiscal years", async () => {
+describe("yearly summary", () => {
+  it("assigns 12/31 and 1/1 to different years", async () => {
     const { api } = setup();
-    await add(api, "expense", "2027-03-31", 100);
-    await add(api, "expense", "2027-04-01", 200);
-    const fy2026 = await api.get("/api/summary/fiscal-year").query({ year: 2026 });
-    const fy2027 = await api.get("/api/summary/fiscal-year").query({ year: 2027 });
-    expect(fy2026.body.expense).toBe(100);
-    expect(fy2027.body.expense).toBe(200);
+    await add(api, "expense", "2026-12-31", 100);
+    await add(api, "expense", "2027-01-01", 200);
+    const y2026 = await api.get("/api/summary/yearly").query({ year: 2026 });
+    const y2027 = await api.get("/api/summary/yearly").query({ year: 2027 });
+    expect(y2026.body.expense).toBe(100);
+    expect(y2027.body.expense).toBe(200);
   });
 
-  it("returns 12 monthly rows from April to March", async () => {
+  it("returns 12 monthly rows from January to December", async () => {
     const { api } = setup();
-    await add(api, "income", "2026-04-10", 1000);
-    await add(api, "expense", "2027-03-15", 400);
-    const res = await api.get("/api/summary/fiscal-year").query({ year: 2026 });
+    await add(api, "income", "2026-01-10", 1000);
+    await add(api, "expense", "2026-12-15", 400);
+    const res = await api.get("/api/summary/yearly").query({ year: 2026 });
     expect(res.body.months).toHaveLength(12);
-    expect(res.body.months[0]).toMatchObject({ year: 2026, month: 4, income: 1000, balance: 1000 });
-    expect(res.body.months[11]).toMatchObject({ year: 2027, month: 3, expense: 400, balance: -400 });
+    expect(res.body.months[0]).toMatchObject({ year: 2026, month: 1, income: 1000, balance: 1000 });
+    expect(res.body.months[11]).toMatchObject({ year: 2026, month: 12, expense: 400, balance: -400 });
     expect(res.body).toMatchObject({ year: 2026, income: 1000, expense: 400, balance: 600 });
   });
 
   it("validates the year", async () => {
     const { api } = setup();
-    expect((await api.get("/api/summary/fiscal-year")).status).toBe(400);
+    expect((await api.get("/api/summary/yearly")).status).toBe(400);
   });
 });

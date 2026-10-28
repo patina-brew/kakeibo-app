@@ -68,9 +68,3 @@ export function monthGrid(year: number, month: number): CalendarCell[] {
   }
   return cells
 }
-
-// 年度は4月始まり。開始年で表す(2026年度 = 2026-04 〜 2027-03)
-export function fiscalYearOf(date: string): number {
-  const { year, month } = parseDateStr(date)
-  return month >= 4 ? year : year - 1
-}

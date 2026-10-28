@@ -31,21 +31,19 @@ export function summaryRouter(db: Db): Router {
     res.json({ year, month, ...totalsBetween(db, `${prefix}-01`, `${prefix}-31`) });
   });
 
-  // 年度は year-04-01 〜 (year+1)-03-31
-  router.get("/fiscal-year", (req, res) => {
+  // 年別は year-01-01 〜 year-12-31
+  router.get("/yearly", (req, res) => {
     const year = parseIntParam(req.query.year);
-    if (year === null || year < 1000 || year > 9998) {
+    if (year === null || year < 1000 || year > 9999) {
       res.status(400).json({ error: "year を指定してください" });
       return;
     }
     const months = [];
-    for (let i = 0; i < 12; i++) {
-      const m = ((3 + i) % 12) + 1;
-      const y = m >= 4 ? year : year + 1;
-      const prefix = `${y}-${pad2(m)}`;
-      months.push({ year: y, month: m, ...totalsBetween(db, `${prefix}-01`, `${prefix}-31`) });
+    for (let m = 1; m <= 12; m++) {
+      const prefix = `${year}-${pad2(m)}`;
+      months.push({ year, month: m, ...totalsBetween(db, `${prefix}-01`, `${prefix}-31`) });
     }
-    const total = totalsBetween(db, `${year}-04-01`, `${year + 1}-03-31`);
+    const total = totalsBetween(db, `${year}-01-01`, `${year}-12-31`);
     res.json({ year, ...total, months });
   });
 

@@ -13,9 +13,9 @@ function mockFetch(handler: Handler) {
   return fn
 }
 
-const tx = (id: number, date: string) => ({
+const tx = (id: number, date: string, type: 'expense' | 'income' = 'expense') => ({
   id,
-  type: 'expense',
+  type,
   date,
   amount: 100,
   categoryId: 1,
@@ -26,12 +26,16 @@ beforeEach(() => vi.unstubAllGlobals())
 afterEach(() => vi.unstubAllGlobals())
 
 describe('useMonthTransactions', () => {
-  it('loads the month range and exposes dates that have transactions', async () => {
-    const fetchMock = mockFetch(() => ({ body: [tx(1, '2026-10-05'), tx(2, '2026-10-05'), tx(3, '2026-10-20')] }))
+  it('loads the month range and exposes markers per transaction type', async () => {
+    const fetchMock = mockFetch(() => ({
+      body: [tx(1, '2026-10-05'), tx(2, '2026-10-05', 'income'), tx(3, '2026-10-20')],
+    }))
     const ledger = useMonthTransactions()
     await ledger.load(2026, 10)
     expect(fetchMock.mock.calls[0]![0]).toBe('/api/transactions?from=2026-10-01&to=2026-10-31')
-    expect([...ledger.datesWithTransactions.value].sort()).toEqual(['2026-10-05', '2026-10-20'])
+    expect([...ledger.dayMarkers.value.keys()].sort()).toEqual(['2026-10-05', '2026-10-20'])
+    expect([...ledger.dayMarkers.value.get('2026-10-05')!].sort()).toEqual(['expense', 'income'])
+    expect([...ledger.dayMarkers.value.get('2026-10-20')!]).toEqual(['expense'])
     expect(ledger.forDate('2026-10-05')).toHaveLength(2)
     expect(ledger.forDate('2026-10-06')).toHaveLength(0)
   })
@@ -102,7 +106,7 @@ describe('useCategories', () => {
 })
 
 describe('useSummary', () => {
-  it('loads monthly and fiscal summaries', async () => {
+  it('loads monthly and yearly summaries', async () => {
     const fetchMock = mockFetch((url) =>
       url.includes('monthly')
         ? { body: { year: 2026, month: 10, expense: 1, income: 2, balance: 1 } }
@@ -110,10 +114,10 @@ describe('useSummary', () => {
     )
     const s = useSummary()
     await s.loadMonthly(2026, 10)
-    await s.loadFiscal(2026)
+    await s.loadYearly(2026)
     expect(fetchMock.mock.calls[0]![0]).toBe('/api/summary/monthly?year=2026&month=10')
-    expect(fetchMock.mock.calls[1]![0]).toBe('/api/summary/fiscal-year?year=2026')
+    expect(fetchMock.mock.calls[1]![0]).toBe('/api/summary/yearly?year=2026')
     expect(s.monthly.value?.balance).toBe(1)
-    expect(s.fiscal.value?.year).toBe(2026)
+    expect(s.yearly.value?.year).toBe(2026)
   })
 })

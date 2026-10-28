@@ -33,7 +33,7 @@ export interface MonthlySummary extends Totals {
   month: number
 }
 
-export interface FiscalYearSummary extends Totals {
+export interface YearlySummary extends Totals {
   year: number
   months: MonthlySummary[]
 }
@@ -89,5 +89,5 @@ export const api = {
 
   monthlySummary: (year: number, month: number) =>
     request<MonthlySummary>(`/api/summary/monthly?year=${year}&month=${month}`),
-  fiscalYearSummary: (year: number) => request<FiscalYearSummary>(`/api/summary/fiscal-year?year=${year}`),
+  yearlySummary: (year: number) => request<YearlySummary>(`/api/summary/yearly?year=${year}`),
 }

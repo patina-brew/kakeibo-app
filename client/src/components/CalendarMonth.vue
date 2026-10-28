@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import type { TxType } from '../lib/api'
 import { monthGrid, todayStr } from '../lib/date'
 
 const props = defineProps<{
   year: number
   month: number
   selected: string | null
-  markedDates?: Set<string>
+  dayMarkers?: Map<string, Set<TxType>>
 }>()
 
 const emit = defineEmits<{
@@ -49,7 +50,16 @@ function dayOf(date: string): number {
         @click="emit('select', cell.date)"
       >
         <span>{{ dayOf(cell.date) }}</span>
-        <span v-if="markedDates?.has(cell.date)" class="marker" data-testid="marker" aria-label="収支あり"></span>
+        <span class="markers">
+          <span
+            v-for="type in dayMarkers?.get(cell.date) ?? []"
+            :key="type"
+            class="marker"
+            :class="type"
+            :data-testid="`marker-${type}`"
+            :aria-label="type === 'expense' ? '支出あり' : '収入あり'"
+          ></span>
+        </span>
       </button>
     </div>
   </div>
@@ -118,13 +128,26 @@ function dayOf(date: string): number {
   background: #2b6cb0;
   color: #fff;
 }
+.markers {
+  display: flex;
+  gap: 3px;
+  min-height: 6px;
+}
 .marker {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: #e8590c;
 }
-.cell.selected .marker {
-  background: #fff;
+.marker.expense {
+  background: #dd6b20;
+}
+.marker.income {
+  background: #2b6cb0;
+}
+.cell.selected .marker.expense {
+  background: #f6a055;
+}
+.cell.selected .marker.income {
+  background: #a3c9ec;
 }
 </style>

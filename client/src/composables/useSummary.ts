@@ -1,17 +1,17 @@
 import { ref } from 'vue'
-import { api, type FiscalYearSummary, type MonthlySummary } from '../lib/api'
+import { api, type MonthlySummary, type YearlySummary } from '../lib/api'
 
 export function useSummary() {
   const monthly = ref<MonthlySummary | null>(null)
-  const fiscal = ref<FiscalYearSummary | null>(null)
+  const yearly = ref<YearlySummary | null>(null)
 
   async function loadMonthly(year: number, month: number) {
     monthly.value = await api.monthlySummary(year, month)
   }
 
-  async function loadFiscal(year: number) {
-    fiscal.value = await api.fiscalYearSummary(year)
+  async function loadYearly(year: number) {
+    yearly.value = await api.yearlySummary(year)
   }
 
-  return { monthly, fiscal, loadMonthly, loadFiscal }
+  return { monthly, yearly, loadMonthly, loadYearly }
 }

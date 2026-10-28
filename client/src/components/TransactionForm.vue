@@ -1,8 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import type { Category, Transaction, TransactionInput, TxType } from '../lib/api'
-import { formatDateWithWeekday, parseDateStr } from '../lib/date'
-import CalendarMonth from './CalendarMonth.vue'
+import { formatDateWithWeekday } from '../lib/date'
 
 const props = defineProps<{
   categories: Category[]
@@ -21,8 +20,6 @@ const type = ref<TxType>(props.transaction?.type ?? 'expense')
 const date = ref(start)
 const amount = ref(props.transaction ? String(props.transaction.amount) : '')
 const categoryId = ref<number | null>(props.transaction?.categoryId ?? null)
-const viewYear = ref(parseDateStr(start).year)
-const viewMonth = ref(parseDateStr(start).month)
 const errors = ref<string[]>([])
 
 const options = computed(() => props.categories.filter((c) => c.type === type.value))
@@ -35,19 +32,6 @@ function ensureCategory() {
 ensureCategory()
 watch(type, ensureCategory)
 watch(() => props.categories, ensureCategory)
-
-function selectDate(value: string) {
-  date.value = value
-  const { year, month } = parseDateStr(value)
-  viewYear.value = year
-  viewMonth.value = month
-}
-
-function navigate(delta: number) {
-  const index = viewYear.value * 12 + (viewMonth.value - 1) + delta
-  viewYear.value = Math.floor(index / 12)
-  viewMonth.value = (index % 12) + 1
-}
 
 function submit() {
   const messages: string[] = []
@@ -81,13 +65,6 @@ function submit() {
     <div class="field">
       <span class="label">日付</span>
       <strong data-testid="date-label">{{ date ? formatDateWithWeekday(date) : '未選択' }}</strong>
-      <CalendarMonth
-        :year="viewYear"
-        :month="viewMonth"
-        :selected="date"
-        @select="selectDate"
-        @navigate="navigate"
-      />
     </div>
 
     <label class="field">

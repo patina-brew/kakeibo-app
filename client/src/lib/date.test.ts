@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest'
 import {
   addMonths,
   daysInMonth,
-  fiscalYearOf,
   formatDateWithWeekday,
   formatYen,
   monthGrid,
@@ -67,15 +66,6 @@ describe('monthGrid', () => {
     const cells = monthGrid(2026, 12)
     expect(cells).toHaveLength(35)
     expect(cells[cells.length - 1]!.date).toBe('2027-01-02')
-  })
-})
-
-describe('fiscalYearOf', () => {
-  it('uses April as the start of the fiscal year', () => {
-    expect(fiscalYearOf('2027-03-31')).toBe(2026)
-    expect(fiscalYearOf('2027-04-01')).toBe(2027)
-    expect(fiscalYearOf('2026-12-31')).toBe(2026)
-    expect(fiscalYearOf('2026-01-01')).toBe(2025)
   })
 })
 

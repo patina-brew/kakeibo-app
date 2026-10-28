@@ -4,7 +4,7 @@ import CalendarMonth from './CalendarMonth.vue'
 
 function mountCalendar(props: Partial<InstanceType<typeof CalendarMonth>['$props']> = {}) {
   return mount(CalendarMonth, {
-    props: { year: 2026, month: 10, selected: null, markedDates: new Set<string>(), ...props },
+    props: { year: 2026, month: 10, selected: null, dayMarkers: new Map(), ...props },
   })
 }
 
@@ -35,17 +35,34 @@ describe('CalendarMonth', () => {
     expect(wrapper.emitted('navigate')).toEqual([[-1], [1]])
   })
 
-  it('shows a marker only on dates with transactions', () => {
-    const wrapper = mountCalendar({ markedDates: new Set(['2026-10-05', '2026-10-20']) })
-    expect(wrapper.find('[data-date="2026-10-05"] [data-testid="marker"]').exists()).toBe(true)
-    expect(wrapper.find('[data-date="2026-10-20"] [data-testid="marker"]').exists()).toBe(true)
-    expect(wrapper.find('[data-date="2026-10-06"] [data-testid="marker"]').exists()).toBe(false)
-    expect(wrapper.findAll('[data-testid="marker"]')).toHaveLength(2)
+  it('shows an orange marker for expense days and a blue marker for income days', () => {
+    const dayMarkers = new Map([
+      ['2026-10-05', new Set(['expense' as const])],
+      ['2026-10-20', new Set(['income' as const])],
+      ['2026-10-26', new Set(['expense' as const, 'income' as const])],
+    ])
+    const wrapper = mountCalendar({ dayMarkers })
+    expect(wrapper.find('[data-date="2026-10-05"] [data-testid="marker-expense"]').exists()).toBe(true)
+    expect(wrapper.find('[data-date="2026-10-05"] [data-testid="marker-income"]').exists()).toBe(false)
+    expect(wrapper.find('[data-date="2026-10-20"] [data-testid="marker-income"]').exists()).toBe(true)
+    expect(wrapper.find('[data-date="2026-10-20"] [data-testid="marker-expense"]').exists()).toBe(false)
+    expect(wrapper.find('[data-date="2026-10-06"] [data-testid="marker-expense"]').exists()).toBe(false)
   })
 
-  it('removes the marker when the set no longer contains the date', async () => {
-    const wrapper = mountCalendar({ markedDates: new Set(['2026-10-05']) })
-    await wrapper.setProps({ markedDates: new Set<string>() })
-    expect(wrapper.findAll('[data-testid="marker"]')).toHaveLength(0)
+  it('shows both markers on a day that has expense and income', () => {
+    const dayMarkers = new Map([['2026-10-26', new Set(['expense' as const, 'income' as const])]])
+    const wrapper = mountCalendar({ dayMarkers })
+    const cell = wrapper.get('[data-date="2026-10-26"]')
+    expect(cell.get('[data-testid="marker-expense"]').classes()).toContain('expense')
+    expect(cell.get('[data-testid="marker-income"]').classes()).toContain('income')
+    expect(wrapper.findAll('[data-testid="marker-expense"]')).toHaveLength(1)
+    expect(wrapper.findAll('[data-testid="marker-income"]')).toHaveLength(1)
+  })
+
+  it('removes the markers when the map no longer contains the date', async () => {
+    const wrapper = mountCalendar({ dayMarkers: new Map([['2026-10-05', new Set(['expense' as const])]]) })
+    await wrapper.setProps({ dayMarkers: new Map() })
+    expect(wrapper.find('[data-testid="marker-expense"]').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="marker-income"]').exists()).toBe(false)
   })
 })

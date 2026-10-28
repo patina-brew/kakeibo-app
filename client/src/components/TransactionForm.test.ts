@@ -13,25 +13,23 @@ function mountForm(props: Record<string, unknown> = {}) {
   return mount(TransactionForm, { props: { categories, initialDate: '2026-10-26', ...props } })
 }
 
+const editingTx: Transaction = { id: 5, type: 'expense', date: '2026-10-26', amount: 800, categoryId: 1, categoryName: '食費' }
+
 describe('TransactionForm', () => {
   it('uses the selected date as the initial value and shows the weekday', () => {
     const wrapper = mountForm()
     expect(wrapper.get('[data-testid="date-label"]').text()).toBe('2026年10月26日(月)')
-    expect(wrapper.get('[data-date="2026-10-26"]').classes()).toContain('selected')
   })
 
-  it('updates the date label and weekday when another date is picked on the calendar', async () => {
+  it('does not show a calendar when creating a new transaction', () => {
     const wrapper = mountForm()
-    await wrapper.get('[data-date="2026-10-28"]').trigger('click')
-    expect(wrapper.get('[data-testid="date-label"]').text()).toBe('2026年10月28日(水)')
+    expect(wrapper.find('.calendar-title').exists()).toBe(false)
   })
 
-  it('can pick a date in another month via the calendar navigation', async () => {
-    const wrapper = mountForm()
-    await wrapper.get('[aria-label="次の月"]').trigger('click')
-    expect(wrapper.get('.calendar-title').text()).toBe('2026年11月')
-    await wrapper.get('[data-date="2026-11-03"]').trigger('click')
-    expect(wrapper.get('[data-testid="date-label"]').text()).toBe('2026年11月3日(火)')
+  it('does not show a calendar when editing either', () => {
+    const wrapper = mountForm({ transaction: editingTx })
+    expect(wrapper.find('.calendar-title').exists()).toBe(false)
+    expect(wrapper.get('[data-testid="date-label"]').text()).toBe('2026年10月26日(月)')
   })
 
   it('only lists categories matching the selected type', async () => {
@@ -44,10 +42,9 @@ describe('TransactionForm', () => {
   it('emits submit with the parsed input', async () => {
     const wrapper = mountForm()
     await wrapper.get('input[name="amount"]').setValue('1,200')
-    await wrapper.get('[data-date="2026-10-27"]').trigger('click')
     await wrapper.get('form').trigger('submit')
     expect(wrapper.emitted('submit')?.[0]).toEqual([
-      { type: 'expense', date: '2026-10-27', amount: 1200, categoryId: 1 },
+      { type: 'expense', date: '2026-10-26', amount: 1200, categoryId: 1 },
     ])
   })
 

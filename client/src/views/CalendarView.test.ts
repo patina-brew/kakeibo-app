@@ -79,6 +79,15 @@ const food = (id: number, date: string, amount: number): Tx => ({
   categoryName: '食費',
 })
 
+const salary = (id: number, date: string, amount: number): Tx => ({
+  id,
+  type: 'income',
+  date,
+  amount,
+  categoryId: 11,
+  categoryName: '給与',
+})
+
 async function mountView() {
   const wrapper = mount(CalendarView, { attachTo: document.body })
   await flushPromises()
@@ -105,7 +114,18 @@ describe('CalendarView', () => {
     expect(wrapper.get('.day-header').text()).toContain('2026年10月26日(月)')
     expect(wrapper.findAll('.item')).toHaveLength(1)
     expect(wrapper.get('.item').text()).toContain('1,200円')
-    expect(wrapper.findAll('[data-testid="marker"]')).toHaveLength(2)
+    expect(wrapper.findAll('[data-testid="marker-expense"]')).toHaveLength(2)
+  })
+
+  it('shows an orange marker for expense days, a blue marker for income days, and both when a day has both', async () => {
+    installFakeServer([food(1, '2026-10-26', 1200), salary(2, '2026-10-26', 250000), salary(3, '2026-10-25', 1000)])
+    const wrapper = await mountView()
+    const both = wrapper.get('[data-date="2026-10-26"]')
+    expect(both.find('[data-testid="marker-expense"]').exists()).toBe(true)
+    expect(both.find('[data-testid="marker-income"]').exists()).toBe(true)
+    const incomeOnly = wrapper.get('[data-date="2026-10-25"]')
+    expect(incomeOnly.find('[data-testid="marker-expense"]').exists()).toBe(false)
+    expect(incomeOnly.find('[data-testid="marker-income"]').exists()).toBe(true)
   })
 
   it('shows the transactions of another date when it is selected', async () => {
@@ -122,12 +142,15 @@ describe('CalendarView', () => {
   it('creates a transaction from the dialog and refreshes the list and markers', async () => {
     installFakeServer([])
     const wrapper = await mountView()
-    expect(wrapper.findAll('[data-testid="marker"]')).toHaveLength(0)
+    expect(wrapper.findAll('[data-testid="marker-expense"]')).toHaveLength(0)
 
+    // 新規登録ダイアログにカレンダーは出ない。日付は先にメインのカレンダーで選ぶ
+    await wrapper.get('[data-date="2026-10-27"]').trigger('click')
+    await flushPromises()
     await wrapper.get('button.primary').trigger('click')
     const dialog = wrapper.get('[role="dialog"]')
-    expect(dialog.get('[data-testid="date-label"]').text()).toBe('2026年10月26日(月)')
-    await dialog.get('[data-date="2026-10-27"]').trigger('click')
+    expect(dialog.find('.calendar-title').exists()).toBe(false)
+    expect(dialog.get('[data-testid="date-label"]').text()).toBe('2026年10月27日(火)')
     await dialog.get('input[name="amount"]').setValue('800')
     await dialog.get('form').trigger('submit')
     await flushPromises()
@@ -135,7 +158,7 @@ describe('CalendarView', () => {
     expect(wrapper.find('[role="dialog"]').exists()).toBe(false)
     expect(wrapper.get('.day-header').text()).toContain('2026年10月27日(火)')
     expect(wrapper.get('.item').text()).toContain('800円')
-    expect(wrapper.findAll('[data-testid="marker"]')).toHaveLength(1)
+    expect(wrapper.findAll('[data-testid="marker-expense"]')).toHaveLength(1)
   })
 
   it('edits a transaction', async () => {
@@ -164,22 +187,22 @@ describe('CalendarView', () => {
     const server = installFakeServer([food(1, '2026-10-26', 1200)])
     vi.spyOn(window, 'confirm').mockReturnValue(true)
     const wrapper = await mountView()
-    expect(wrapper.findAll('[data-testid="marker"]')).toHaveLength(1)
+    expect(wrapper.findAll('[data-testid="marker-expense"]')).toHaveLength(1)
     await wrapper.get('[data-action="delete"]').trigger('click')
     await flushPromises()
     expect(server.getTxs()).toHaveLength(0)
     expect(wrapper.text()).toContain('登録された収支はありません')
-    expect(wrapper.findAll('[data-testid="marker"]')).toHaveLength(0)
+    expect(wrapper.findAll('[data-testid="marker-expense"]')).toHaveLength(0)
   })
 
   it('moves to another month with the navigation buttons and loads that month', async () => {
     installFakeServer([food(1, '2026-11-05', 700)])
     const wrapper = await mountView()
-    expect(wrapper.findAll('[data-testid="marker"]')).toHaveLength(0)
+    expect(wrapper.findAll('[data-testid="marker-expense"]')).toHaveLength(0)
     await wrapper.get('[aria-label="次の月"]').trigger('click')
     await flushPromises()
     expect(wrapper.get('.calendar-title').text()).toBe('2026年11月')
-    expect(wrapper.findAll('[data-testid="marker"]')).toHaveLength(1)
+    expect(wrapper.findAll('[data-testid="marker-expense"]')).toHaveLength(1)
   })
 
   it('shows an error when deleting a category in use', async () => {

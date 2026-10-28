@@ -123,7 +123,7 @@ function openCategories() {
         :year="ledger.year.value"
         :month="ledger.month.value"
         :selected="selected"
-        :marked-dates="ledger.datesWithTransactions.value"
+        :day-markers="ledger.dayMarkers.value"
         @select="selectDate"
         @navigate="navigate"
       />

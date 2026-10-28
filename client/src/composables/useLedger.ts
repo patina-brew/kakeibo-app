@@ -37,7 +37,15 @@ export function useMonthTransactions() {
   const month = ref(new Date().getMonth() + 1)
   const transactions = ref<Transaction[]>([])
 
-  const datesWithTransactions = computed(() => new Set(transactions.value.map((t) => t.date)))
+  const dayMarkers = computed(() => {
+    const map = new Map<string, Set<TxType>>()
+    for (const t of transactions.value) {
+      const types = map.get(t.date) ?? new Set<TxType>()
+      types.add(t.type)
+      map.set(t.date, types)
+    }
+    return map
+  })
 
   async function load(y = year.value, m = month.value) {
     year.value = y
@@ -65,5 +73,5 @@ export function useMonthTransactions() {
     await load()
   }
 
-  return { year, month, transactions, datesWithTransactions, load, forDate, create, update, remove }
+  return { year, month, transactions, dayMarkers, load, forDate, create, update, remove }
 }
